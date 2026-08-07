@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MNIST Digit Classifier</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            position: relative;
+        }
+        #imageContainer {
+            margin-top: 20px;
+            width: 200px;
+            height: 200px;
+            border: 2px solid #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: white;
+        }
+        #imagePreview {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        #footer {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            font-size: 12px;
+            color: gray;
+        }
+    </style>
+    <script>
+        function previewImage(event) {
+            let imageContainer = document.getElementById("imageContainer");
+            let imagePreview = document.getElementById("imagePreview");
+            let file = event.target.files[0];
+
+            if (file) {
+                let reader = new FileReader();
+                reader.onload = function (e) {
+                    imagePreview.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function uploadImage() {
+            let formData = new FormData();
+            let imageFile = document.getElementById("imageInput").files[0];
+            formData.append("file", imageFile);
+
+            fetch("/predict", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById("result").innerText = "Error: " + data.error;
+                } else {
+                    document.getElementById("result").innerText =
+                        "Predicted Digit: " + data.prediction + " (Confidence: " + data.confidence + "%)";
+                }
+            })
+            .catch(error => {
+                document.getElementById("result").innerText = "Request failed: " + error;
+            });
+        }
+    </script>
+</head>
+<body>
+
+    <h1>MNIST Digit Classifier</h1>
+
+    <input type="file" id="imageInput" accept="image/*" onchange="previewImage(event)">
+
+    <div id="imageContainer">
+        <img id="imagePreview" src="" alt="Preview">
+    </div>
+
+    <button onclick="uploadImage()">Predict</button>
+
+    <p id="result"></p>
+
+    
+
+</body>
+</html>

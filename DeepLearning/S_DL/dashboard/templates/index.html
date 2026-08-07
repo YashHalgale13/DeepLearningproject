@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ML DASHBOARD</title>
+<link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+    HEADER
+════════════════════════════════════════════════════════════ -->
+<header class="site-header">
+  <div class="header-left">
+    <span class="header-tag">[ ML ]</span>
+    <h1 class="header-title">NEURAL DASHBOARD</h1>
+  </div>
+  <div class="header-right">
+    <span class="header-sub">EXPERIMENTS 2–10 / UNIFIED INTERFACE</span>
+    <span id="status-dot" class="status-dot">●</span>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════════════════════
+    LAYOUT
+════════════════════════════════════════════════════════════ -->
+<div class="layout">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-label">SELECT MODEL</div>
+
+    {% set model_list = [
+      ("mnist",     "01", "MNIST DIGIT",       "IMAGE → DIGIT"),
+      ("catdog",    "02", "CAT VS DOG",         "IMAGE → CLASS"),
+      ("emotion",   "03", "EMOTION DETECT",     "IMAGE → EMOTION"),
+      ("sentiment", "04", "SENTIMENT RNN",      "TEXT → POLARITY"),
+      ("caption",   "05", "IMAGE CAPTION",      "IMAGE → TEXT"),
+      ("pos",       "06", "POS TAGGER",         "TEXT → TAGS"),
+      ("lstm",      "07", "LSTM PREDICTOR",     "TEXT → NEXT WORDS"),
+      ("sms",       "08", "SMS SPAM GRU",       "TEXT → SPAM/HAM")
+    ] %}
+
+    {% for mid, num, label, sub in model_list %}
+    <button class="model-btn" data-model="{{ mid }}" onclick="selectModel('{{ mid }}')">
+      <span class="model-num">{{ num }}</span>
+      <span class="model-info">
+        <span class="model-name">{{ label }}</span>
+        <span class="model-sub">{{ sub }}</span>
+      </span>
+    </button>
+    {% endfor %}
+  </aside>
+
+  <!-- ── MAIN PANEL ── -->
+  <main class="main-panel">
+
+    <!-- WELCOME STATE -->
+    <div id="welcome-state" class="welcome-state">
+      <div class="welcome-inner">
+        <div class="welcome-ascii">
+          ██╗  ██╗██╗<br>
+          ███╗ ██║██║<br>
+          ██╔██╗██║██║<br>
+          ██║╚████║██║<br>
+          ██║ ╚███║███████╗<br>
+          ╚═╝  ╚══╝╚══════╝
+        </div>
+SELECT A MODEL FROM THE SIDEBAR TO BEGIN.</p>
+        <p class="welcome-sub">EXPERIMENTS 2–10. ONE BEAUTIFUL UI.</p>
+      </div>
+    </div>
+
+    <!-- ACTIVE MODEL PANEL -->
+    <div id="model-panel" class="model-panel hidden">
+
+      <!-- Model Header -->
+      <div class="panel-header">
+        <div class="panel-header-left">
+          <span id="panel-num" class="panel-num">01</span>
+          <div>
+            <div id="panel-title" class="panel-title">MODEL NAME</div>
+            <div id="panel-desc" class="panel-desc">description</div>
+          </div>
+        </div>
+        <div id="panel-type-badge" class="type-badge">IMAGE</div>
+      </div>
+
+      <!-- Input Section -->
+      <div class="section-label">INPUT</div>
+      <div id="input-section" class="input-section">
+
+        <!-- Image input -->
+        <div id="image-input" class="input-block hidden">
+          <label id="image-label" class="upload-label" for="file-input">
+            <span class="upload-icon">⬆</span>
+            <span id="upload-text" class="upload-text">DRAG & DROP OR CLICK TO UPLOAD</span>
+            <span class="upload-hint">PNG / JPG / JPEG</span>
+          </label>
+          <input type="file" id="file-input" accept="image/*" class="file-input" onchange="handleFileSelect(event)" />
+          <div id="image-preview-wrap" class="image-preview-wrap hidden">
+            <img id="image-preview" class="image-preview" src="" alt="preview" />
+            <button class="clear-btn" onclick="clearImage()">✕ CLEAR</button>
+          </div>
+        </div>
+
+        <!-- Text input -->
+        <div id="text-input" class="input-block hidden">
+          <label id="text-label" class="field-label">INPUT TEXT</label>
+          <textarea id="text-area" class="text-area" rows="4" placeholder="Enter text here..."></textarea>
+        </div>
+
+        <!-- Text + number input (LSTM) -->
+        <div id="text-multi-input" class="input-block hidden">
+          <label id="text-multi-label" class="field-label">SEED TEXT</label>
+          <textarea id="text-multi-area" class="text-area" rows="3" placeholder="Enter seed text..."></textarea>
+          <label class="field-label" style="margin-top:12px">WORDS TO PREDICT</label>
+          <input type="number" id="num-words" class="num-input" value="5" min="1" max="50" />
+        </div>
+
+        <!-- Text + attention controls input (Fake News BERT) -->
+        <div id="text-attention-input" class="input-block hidden">
+          <label id="text-attention-label" class="field-label">PASTE NEWS ARTICLE TEXT</label>
+          <textarea id="text-attention-area" class="text-area" rows="5" placeholder="Enter a news headline and article body here..."></textarea>
+          <div class="attention-controls">
+            <div class="attn-ctrl-group">
+              <label class="field-label">BERT LAYER</label>
+              <select id="bert-layer-select" class="attn-select"></select>
+            </div>
+            <div class="attn-ctrl-group">
+              <label class="field-label">ATTENTION HEAD</label>
+              <select id="bert-head-select" class="attn-select"></select>
+            </div>
+          </div>
+          <p class="attn-hint">TIP: DIFFERENT LAYERS / HEADS REVEAL DIFFERENT TOKEN RELATIONSHIPS.</p>
+        </div>
+
+      </div>
+
+      <!-- Predict Button -->
+      <button id="predict-btn" class="predict-btn" onclick="runPredict()">
+        <span id="btn-text">PREDICT</span>
+      </button>
+
+      <!-- Error Box -->
+      <div id="error-box" class="error-box hidden">
+        <span class="error-icon">⚠</span>
+        <span id="error-msg">Error message here</span>
+      </div>
+
+      <!-- Output Section -->
+      <div id="output-section" class="output-section hidden">
+        <div class="section-label">OUTPUT</div>
+
+        <!-- Standard result (label + confidence) -->
+        <div id="result-standard" class="result-block hidden">
+          <div class="result-row">
+            <span class="result-key">RESULT</span>
+            <span id="result-value" class="result-value">—</span>
+          </div>
+          <div class="result-row" id="conf-row">
+            <span class="result-key">CONFIDENCE</span>
+            <span id="conf-value" class="conf-value">—</span>
+          </div>
+          <div id="conf-bar-wrap" class="conf-bar-wrap">
+            <div id="conf-bar" class="conf-bar"></div>
+          </div>
+        </div>
+
+        <!-- Caption result -->
+        <div id="result-caption" class="result-block hidden">
+          <div class="result-row">
+            <span class="result-key">CAPTION</span>
+          </div>
+          <div id="caption-text" class="caption-text">—</div>
+          <div class="result-row" style="margin-top:8px">
+            <span class="result-key">METHOD</span>
+            <span id="caption-method" class="result-value small">—</span>
+          </div>
+        </div>
+
+        <!-- POS result -->
+        <div id="result-pos" class="result-block hidden">
+          <div class="result-row">
+            <span class="result-key">TAGGED TOKENS</span>
+            <span id="pos-count" class="result-value">—</span>
+          </div>
+          <div id="pos-tokens" class="pos-tokens"></div>
+        </div>
+
+        <!-- LSTM result -->
+        <div id="result-lstm" class="result-block hidden">
+          <div class="result-row">
+            <span class="result-key">PREDICTED WORDS</span>
+          </div>
+          <div id="lstm-words" class="lstm-words"></div>
+          <div class="result-row" style="margin-top:12px">
+            <span class="result-key">COMPLETED TEXT</span>
+          </div>
+          <div id="lstm-full" class="caption-text">—</div>
+        </div>
+
+        <!-- Image output (for image models) -->
+        <div id="result-image" class="result-image-wrap hidden">
+          <div class="section-label" style="margin-top:16px">PROCESSED IMAGE</div>
+          <img id="result-img" class="result-img" src="" alt="result" />
+        </div>
+
+        <!-- Fake News result -->
+        <div id="result-fakenews" class="result-block hidden">
+          <div id="fakenews-verdict" class="fakenews-verdict">
+            <span class="result-key">VERDICT</span>
+            <span id="fakenews-label" class="fakenews-label">—</span>
+          </div>
+          <div class="result-row" id="fakenews-conf-row">
+            <span class="result-key">CONFIDENCE</span>
+            <span id="fakenews-conf-value" class="conf-value">—</span>
+          </div>
+          <div id="fakenews-conf-bar-wrap" class="conf-bar-wrap">
+            <div id="fakenews-conf-bar" class="conf-bar"></div>
+          </div>
+          <div class="fakenews-meta">
+            <div class="fakenews-meta-item">
+              <span class="result-key">LAYER</span>
+              <span id="fakenews-meta-layer" class="result-value">—</span>
+            </div>
+            <div class="fakenews-meta-item">
+              <span class="result-key">HEAD</span>
+              <span id="fakenews-meta-head" class="result-value">—</span>
+            </div>
+            <div class="fakenews-meta-item">
+              <span class="result-key">TOKENS</span>
+              <span id="fakenews-meta-tokens" class="result-value">—</span>
+            </div>
+          </div>
+          <div class="section-label" style="margin-top:20px">SELF-ATTENTION HEATMAP</div>
+          <p class="attn-disclaimer">⚠ ATTENTION WEIGHTS SHOW TOKEN RELATIONSHIPS — NOT CAUSAL EXPLANATIONS.</p>
+          <div class="heatmap-scroll">
+            <canvas id="fakenews-canvas"></canvas>
+          </div>
+          <div class="heatmap-legend">
+            <span class="legend-label">LOW</span>
+            <div class="legend-gradient"></div>
+            <span class="legend-label">HIGH</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     FOOTER
+════════════════════════════════════════════════════════════ -->
+<footer class="site-footer">
+  <span>ML DASHBOARD — BRUTALIST EDITION</span>
+  <span id="active-model-footer">NO MODEL SELECTED</span>
+</footer>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
