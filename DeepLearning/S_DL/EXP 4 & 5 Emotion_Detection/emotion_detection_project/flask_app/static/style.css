@@ -1,0 +1,84 @@
+body{
+  font-family: Georgia, 'Times New Roman', serif;
+  text-align:center;
+  background:#f7f7f7;
+  color:#111;
+}
+h1{
+  font-size:56px;
+  margin-top:30px;
+  margin-bottom:20px;
+}
+h2{
+  font-size:32px;
+  margin-bottom:10px;
+  color:#333;
+}
+.subtitle{
+  font-size:18px;
+  margin-bottom:14px;
+  color:#555;
+}
+.container{
+  display:flex;
+  justify-content:center;
+  gap:40px;
+  flex-wrap:wrap;
+  max-width:1200px;
+  margin:0 auto;
+  padding:20px;
+}
+.section{
+  background:#fff;
+  padding:30px;
+  border-radius:10px;
+  box-shadow:0 2px 10px rgba(0,0,0,0.1);
+  min-width:320px;
+  max-width:400px;
+}
+.preview-box{
+  width:260px;
+  height:260px;
+  margin:18px auto;
+  border:2px solid #111;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#fff;
+  overflow:hidden;
+}
+.preview-box img{
+  max-width:100%;
+  max-height:100%;
+  width:auto;
+  height:auto;
+  object-fit:contain;
+}
+.btn{
+  padding:10px 20px;
+  border:1px solid #333;
+  background:#4CAF50;
+  color:#fff;
+  cursor:pointer;
+  margin-top:6px;
+  font-size:16px;
+  border-radius:5px;
+  transition:background 0.3s;
+}
+.btn:hover{
+  background:#45a049;
+}
+.prediction{
+  margin-top:18px;
+  font-size:22px;
+}
+.prediction .value{
+  margin-left:8px;
+  font-weight:bold;
+  font-size:24px;
+  color:#4CAF50;
+}
+input[type="file"]{
+  margin:10px 0;
+  padding:8px;
+}
